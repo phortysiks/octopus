@@ -33,4 +33,3 @@ def get_cheapest_price():
     print(f"The price is {round(cheapest_price, 1)}p")
 
 get_cheapest_price()
-

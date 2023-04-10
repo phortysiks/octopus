@@ -1,10 +1,12 @@
 '''Get the current Octopus Agile electricity prices for Area J'''
-import datetime
+from datetime import datetime, timedelta
 import requests
 
 API_ENDPOINT = 'https://api.octopus.energy/v1/products/AGILE-FLEX-22-11-25/electricity-tariffs/E-1R-AGILE-FLEX-22-11-25-J/standard-unit-rates/' #pylint: disable=line-too-long
 current_price_lookup = requests.get(API_ENDPOINT, timeout=4).json()
-current_datetime = datetime.datetime.now().isoformat()
+current_datetime = datetime.now()
+IS_SUMMERTIME = True
+# print(current_datetime)
 prices_list = current_price_lookup['results']
 
 def normalise_datetime(date):
@@ -13,10 +15,24 @@ def normalise_datetime(date):
     no_z_or_secs = just_time[:-4]
     return no_z_or_secs
 
+# def british_summertime(time):
+#     '''Account for British Summertime as prices are reported in UTC time'''
+#     in_summertime = True
+#     if in_sumemrtime:
+
+
+def convert_dt_string_to_dt_obj(datetime_string):
+    '''Converts the datetime string recieved from the API to a datetime object'''
+    if IS_SUMMERTIME:
+        converted_string = (datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%SZ') + timedelta(hours=1))
+    else :
+        converted_string = datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%SZ')
+    return converted_string
+
 def get_current_price():
     '''Get the current Octopus Agile electricity prices for Area J'''
     for window in prices_list:
-        if (window['valid_from'] < current_datetime) and window['valid_to'] > current_datetime:
+        if (convert_dt_string_to_dt_obj(window['valid_from']) < current_datetime) and convert_dt_string_to_dt_obj(window['valid_to']) > current_datetime:
             current_price = window['value_inc_vat']
             rounded_price = round(current_price, 1)
             print(f"The current price is {rounded_price}p")
@@ -25,11 +41,11 @@ def get_cheapest_price():
     '''Get the cheapest price in the current day and show when it is'''
     cheapest_price = 40
     for window in prices_list:
-        if window['value_inc_vat'] < cheapest_price and window['valid_to'] > current_datetime:
+        if window['value_inc_vat'] < cheapest_price and convert_dt_string_to_dt_obj(window['valid_to']) > current_datetime:
             cheapest_price = window['value_inc_vat']
-            half_hour_window_start_time = window['valid_from']
+            half_hour_window_start_time = convert_dt_string_to_dt_obj(window['valid_from'])
 
-    print(f"The cheapest window starts at {normalise_datetime(half_hour_window_start_time)}")
+    print(f"The cheapest window starts at {(half_hour_window_start_time)}")
     print(f"The price is {round(cheapest_price, 1)}p")
 
 get_cheapest_price()

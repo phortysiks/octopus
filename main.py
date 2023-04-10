@@ -15,11 +15,6 @@ def normalise_datetime(date):
     no_z_or_secs = just_time[:-4]
     return no_z_or_secs
 
-# def british_summertime(time):
-#     '''Account for British Summertime as prices are reported in UTC time'''
-#     in_summertime = True
-#     if in_sumemrtime:
-
 
 def convert_dt_string_to_dt_obj(datetime_string):
     '''Converts the datetime string recieved from the API to a datetime object'''
@@ -29,6 +24,7 @@ def convert_dt_string_to_dt_obj(datetime_string):
         converted_string = datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%SZ')
     return converted_string
 
+
 def get_current_price():
     '''Get the current Octopus Agile electricity prices for Area J'''
     for window in prices_list:
@@ -36,6 +32,7 @@ def get_current_price():
             current_price = window['value_inc_vat']
             rounded_price = round(current_price, 1)
             print(f"The current price is {rounded_price}p")
+
 
 def get_cheapest_price():
     '''Get the cheapest price in the current day and show when it is'''
@@ -45,7 +42,7 @@ def get_cheapest_price():
             cheapest_price = window['value_inc_vat']
             half_hour_window_start_time = convert_dt_string_to_dt_obj(window['valid_from'])
 
-    print(f"The cheapest window starts at {(half_hour_window_start_time)}")
+    print(f"The cheapest window starts at {datetime.strftime(half_hour_window_start_time, '%H:%M')}")
     print(f"The price is {round(cheapest_price, 1)}p")
 
 get_cheapest_price()

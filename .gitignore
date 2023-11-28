@@ -1,3 +1,5 @@
 /package
 /venv_octopus
+/venv
 .env
+output.log

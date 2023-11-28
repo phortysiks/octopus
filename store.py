@@ -1,10 +1,18 @@
 '''Module providing functionality to store Octopus Agile prices'''
 import datetime as dt
 import os
+import logging
 from dotenv import load_dotenv
 import psycopg2
 import requests
 from requests.auth import HTTPBasicAuth
+
+logging.basicConfig(
+    filename='output.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%d %b %Y - %H:%M:%S'
+    )
 
 load_dotenv()
 auth = HTTPBasicAuth(os.getenv('API_KEY'), '')
@@ -56,42 +64,57 @@ connection = psycopg2.connect(
 
 cursor = connection.cursor()
 
-for entry in agile_rates_data:
-    cursor.execute("""
-        INSERT INTO rates_and_consumption (time_interval_start, time_interval_end, agile_elec_price)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (time_interval_start)
-        DO UPDATE
-        SET agile_elec_price = %s;
-    """, (convert_datetime(entry['valid_from']),
-            convert_datetime(entry['valid_to']),
-            entry['value_inc_vat'],
-            entry['value_inc_vat'])
-            )
- 
-for entry in elec_consumption_data:
-    cursor.execute("""
-        INSERT INTO rates_and_consumption (time_interval_start, time_interval_end, elec_consumption)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (time_interval_start)
-        DO UPDATE
-        SET elec_consumption = %s;
-    """, (convert_datetime(entry['interval_start']),
-          convert_datetime(entry['interval_end']),
-          entry['consumption'], entry['consumption'])
-    )
+try:
+    for entry in agile_rates_data:
+        cursor.execute("""
+            INSERT INTO rates_and_consumption (time_interval_start, time_interval_end, agile_elec_price)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (time_interval_start)
+            DO UPDATE
+            SET agile_elec_price = %s;
+        """, (convert_datetime(entry['valid_from']),
+                convert_datetime(entry['valid_to']),
+                entry['value_inc_vat'],
+                entry['value_inc_vat'])
+                )
+    logging.info("Successful store of agile rates")
 
-for entry in gas_consumption_data:
-    cursor.execute("""
-        INSERT INTO rates_and_consumption (time_interval_start, time_interval_end, gas_consumption)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (time_interval_start)
-        DO UPDATE
-        SET gas_consumption = %s;
-    """, (convert_datetime(entry['interval_start']),
-          convert_datetime(entry['interval_end']),
-          entry['consumption'], entry['consumption'])
-    )
+except Exception as e:
+    logging.error("An error occurred storing the agile rates: %s", e, exc_info=True)
+
+try:
+    for entry in elec_consumption_data:
+        cursor.execute("""
+            INSERT INTO rates_and_consumption (time_interval_start, time_interval_end, elec_consumption)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (time_interval_start)
+            DO UPDATE
+            SET elec_consumption = %s;
+        """, (convert_datetime(entry['interval_start']),
+            convert_datetime(entry['interval_end']),
+            entry['consumption'], entry['consumption'])
+        )
+    logging.info("Successful store of electricity consumption")
+
+except Exception as e:
+    logging.error("An error occurred storing the electricity consumption: %s", e, exc_info=True)
+
+try:
+    for entry in gas_consumption_data:
+        cursor.execute("""
+            INSERT INTO rates_and_consumption (time_interval_start, time_interval_end, gas_consumption)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (time_interval_start)
+            DO UPDATE
+            SET gas_consumption = %s;
+        """, (convert_datetime(entry['interval_start']),
+            convert_datetime(entry['interval_end']),
+            entry['consumption'], entry['consumption'])
+        )
+    logging.info("Successful store of gas consumption")
+
+except Exception as e:
+    logging.error("An error occurred storing the gas consumption: %s", e, exc_info=True)
 
 connection.commit()
 cursor.close()

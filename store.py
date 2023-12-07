@@ -8,7 +8,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 logging.basicConfig(
-    filename='output.log',
+    filename='/root/octopus/output.log',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%d %b %Y - %H:%M:%S'
@@ -119,3 +119,5 @@ except Exception as e:
 connection.commit()
 cursor.close()
 connection.close()
+logging.getLogger().handlers[0].flush()
+logging.shutdown()

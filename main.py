@@ -5,7 +5,7 @@ import requests
 API_ENDPOINT = 'https://api.octopus.energy/v1/products/AGILE-FLEX-22-11-25/electricity-tariffs/E-1R-AGILE-FLEX-22-11-25-J/standard-unit-rates/' #pylint: disable=line-too-long
 current_price_lookup = requests.get(API_ENDPOINT, timeout=4).json()
 current_datetime = datetime.now()
-IS_SUMMERTIME = True
+IS_SUMMERTIME = False
 # print(current_datetime)
 prices_list = current_price_lookup['results']
 
